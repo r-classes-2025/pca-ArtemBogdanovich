@@ -1,4 +1,3 @@
-
 # установите и загрузите пакеты
 library(friends)
 library(tidyverse)
@@ -31,6 +30,7 @@ friends_tf <- friends_tokens %>%
 
 # 4. преобразуем в широкий формат
 friends_tf_wide <- friends_tf %>%
+  filter(word != "" & !is.na(word)) %>%  # убираем пустые слова
   select(speaker, word, rel_freq) %>%
   pivot_wider(names_from = word, values_from = rel_freq, values_fill = 0) %>%
   column_to_rownames("speaker")        # превращаем столбец speaker в имена рядов
@@ -42,15 +42,5 @@ km.out <- kmeans(scale(friends_tf_wide), centers = 3, nstart = 20)
 # 6. PCA
 pca_fit <- prcomp(scale(friends_tf_wide), center = TRUE, scale. = TRUE)
 
-# 7. биплот с текстом, цвет = кластер, отобрать 20 наиболее значимых переменных
-q <- fviz_pca_biplot(
-  pca_fit, 
-  label = "var", 
-  habillage = km.out$cluster, 
-  geom.ind = "text",       # текстовые метки для наблюдений
-  select.var = list(cos2 = 20)  # 20 самых важных переменных по косинусу
-)
-
-q
 
 
