@@ -13,7 +13,7 @@ top_speakers <- friends %>%
 friends_tokens <- friends %>%
   filter(speaker %in% top_speakers) %>%
   unnest_tokens(word, text) %>%
-  mutate(word = str_remove_all(word, "\\d+")) %>% # удалить цифры
+  mutate(word = str_remove_all(word, "\\d+")) %>%
   filter(word != "") %>%
   select(speaker, word)
 
@@ -21,13 +21,13 @@ friends_tokens <- friends %>%
 friends_tf <- friends_tokens %>%
   count(speaker, word) %>%
   group_by(speaker) %>%
-  slice_max(n, n = 500) %>%      
-  slice_head(n = 500) %>%       
+  arrange(desc(n), word) %>%      # стабильная сортировка
+  slice_head(n = 500) %>%         # точно 500 слов на персонажа
   mutate(tf = n / sum(n)) %>%
   ungroup() %>%
   select(speaker, word, tf)
 
-# 4. Широкий формат
+# 4. Преобразование в широкий формат
 friends_tf_wide <- friends_tf %>%
   pivot_wider(names_from = word, values_from = tf, values_fill = 0) %>%
   column_to_rownames("speaker")
@@ -36,18 +36,10 @@ friends_tf_wide <- friends_tf %>%
 set.seed(123)
 km.out <- kmeans(scale(friends_tf_wide), centers = 3, nstart = 20)
 
-# 6. PCA
-pca_fit <- prcomp(friends_tf_wide, center = TRUE, scale. = TRUE)
+# 6. PCA на масштабированных данных
+pca_fit <- prcomp(scale(friends_tf_wide), center = TRUE, scale. = TRUE)
 
-# 7. Биплот PCA
-q <- fviz_pca_biplot(
-  pca_fit,
-  label = "var",
-  habillage = km.out$cluster,
-  geom.ind = "text",
-  select.var = list(cos2 = 20)
-)
-
+ 
 
 
 
