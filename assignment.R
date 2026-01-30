@@ -21,23 +21,29 @@ friends_tokens <- friends %>%
 friends_tf <- friends_tokens %>%
   count(speaker, word) %>%
   group_by(speaker) %>%
-  arrange(desc(n), word) %>%      # стабильная сортировка
-  slice_head(n = 500) %>%         # точно 500 слов на персонажа
+  arrange(desc(n), word) %>%
+  slice_head(n = 500) %>%   # строго 500 слов на персонажа
   mutate(tf = n / sum(n)) %>%
   ungroup() %>%
   select(speaker, word, tf)
 
-# 4. Преобразование в широкий формат
 friends_tf_wide <- friends_tf %>%
   pivot_wider(names_from = word, values_from = tf, values_fill = 0) %>%
   column_to_rownames("speaker")
 
-# 5. K-means кластеризация
 set.seed(123)
 km.out <- kmeans(scale(friends_tf_wide), centers = 3, nstart = 20)
 
-# 6. PCA на масштабированных данных
-pca_fit <- prcomp(scale(friends_tf_wide), center = TRUE, scale. = TRUE)
+pca_fit <- prcomp(friends_tf_wide, center = TRUE, scale. = TRUE)
+
+# 7. Биплот PCA
+q <- fviz_pca_biplot(
+  pca_fit,
+  label = "var",                 # подписи переменных
+  habillage = km.out$cluster,    # цвет по кластеру
+  geom.ind = "text",             # имена персонажей
+  select.var = list(cos2 = 20)   # 20 переменных с наибольшим cos2
+)
 
  
 
